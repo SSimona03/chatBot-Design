@@ -10,10 +10,14 @@ function App() {
         </h1>
         <p className="mt-5 max-w-xl text-lg leading-8 text-slate-300">
           React, TypeScript, and Tailwind CSS are installed. Start building by
-          editing <code className="rounded bg-slate-800 px-2 py-1 text-cyan-300">src/App.tsx</code>.
+          editing{" "}
+          <code className="rounded bg-slate-800 px-2 py-1 text-cyan-300">
+            src/App.tsx
+          </code>
+          .
         </p>
         <div className="mt-8 flex flex-wrap gap-3">
-          {['React', 'TypeScript', 'Tailwind CSS'].map((tool) => (
+          {["React", "TypeScript", "Tailwind CSS"].map((tool) => (
             <span
               key={tool}
               className="rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-200"
@@ -24,7 +28,7 @@ function App() {
         </div>
       </section>
     </main>
-  )
+  );
 }
 
-export default App
+export default App;
