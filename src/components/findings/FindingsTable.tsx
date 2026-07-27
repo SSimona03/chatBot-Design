@@ -55,11 +55,10 @@ export function FindingsTable({
         </div>
       </div>
       <div className="mt-4 overflow-hidden rounded-xl border border-[var(--border)]">
-        <div className="hidden grid-cols-[6rem_1fr_7rem_11rem_2rem] gap-3 bg-[var(--soft)] px-4 py-2 text-xs font-semibold text-[var(--muted)] md:grid">
+        <div className="hidden grid-cols-[6rem_minmax(12rem,1fr)_12rem_2rem] gap-3 bg-[var(--soft)] px-4 py-2 text-xs font-semibold text-[var(--muted)] md:grid">
           <span>ID / severity</span>
           <span>Finding</span>
           <span>Status</span>
-          <span>Update status</span>
           <span />
         </div>
         <ul>

@@ -25,9 +25,22 @@ export function ChatMenu({
       }
     }
 
+    const handlePointerDown = (event: PointerEvent) => {
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(event.target as Node)
+      ) {
+        onClose()
+      }
+    }
+
     document.addEventListener('keydown', handleKeyDown)
+    document.addEventListener('pointerdown', handlePointerDown)
     menuRef.current?.querySelector<HTMLButtonElement>('button')?.focus()
-    return () => document.removeEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+      document.removeEventListener('pointerdown', handlePointerDown)
+    }
   }, [onClose])
 
   const runAction = (action: () => void) => {
