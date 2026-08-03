@@ -40,6 +40,16 @@ export function FixPromptList({ findings }: { findings: Finding[] }) {
     setSelectedIds(allSelected ? [] : findings.map((finding) => finding.id))
   }
 
+  const categoryTag = (finding: Finding) => finding.category === 'accessibility'
+    ? {
+        label: 'Accessibility',
+        className: 'border-violet-200 bg-violet-50 text-violet-700',
+      }
+    : {
+        label: 'Edge case',
+        className: 'border-amber-200 bg-amber-50 text-amber-800',
+      }
+
   return (
     <div className="mt-4 space-y-3">
       <p className="text-sm leading-6 text-[var(--muted)]">
@@ -75,35 +85,58 @@ export function FixPromptList({ findings }: { findings: Finding[] }) {
         </button>
       </div>
       <ul className="space-y-3">
-        {findings.map((finding) => (
-          <li className="rounded-xl border border-[var(--border)] bg-[var(--soft)] p-4" key={finding.id}>
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <label className="flex min-w-0 cursor-pointer items-start gap-3">
-                <input
-                  checked={selectedIds.includes(finding.id)}
-                  className="mt-1"
-                  onChange={() => toggleFinding(finding.id)}
-                  type="checkbox"
-                />
-                <span>
-                  <span className="block text-xs font-semibold text-[var(--primary)]">{finding.id}</span>
-                  <span className="mt-1 block font-semibold text-[var(--ink)]">{finding.title}</span>
-                </span>
-              </label>
-              <button
-                className="secondary-button"
-                onClick={() => void copyPrompt(finding)}
-                type="button"
-              >
-                <Icon name={copiedTarget === finding.id ? 'check' : 'copy'} />
-                {copiedTarget === finding.id ? 'Copied' : 'Copy prompt'}
-              </button>
-            </div>
-            <pre className="mt-4 max-h-72 overflow-auto whitespace-pre-wrap rounded-lg border border-[var(--border)] bg-white p-4 font-sans text-xs leading-5 text-[var(--muted)]">
-              {createFixPrompt(finding)}
-            </pre>
-          </li>
-        ))}
+        {findings.map((finding) => {
+          const tag = categoryTag(finding)
+
+          return (
+            <li className="overflow-hidden rounded-xl border border-[var(--border)] bg-white shadow-sm" key={finding.id}>
+              <div className="flex flex-wrap items-start justify-between gap-4 p-4">
+                <label className="flex min-w-0 flex-1 cursor-pointer items-start gap-3">
+                  <input
+                    checked={selectedIds.includes(finding.id)}
+                    className="mt-1"
+                    onChange={() => toggleFinding(finding.id)}
+                    type="checkbox"
+                  />
+                  <span className="min-w-0">
+                    <span className="flex flex-wrap items-center gap-2">
+                      <span className="text-xs font-semibold text-[var(--primary)]">{finding.id}</span>
+                      <span className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold ${tag.className}`}>
+                        {tag.label}
+                      </span>
+                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium capitalize text-slate-600">
+                        {finding.severity}
+                      </span>
+                    </span>
+                    <span className="mt-1.5 block font-semibold leading-6 text-[var(--ink)]">{finding.title}</span>
+                  </span>
+                </label>
+                <button
+                  className="secondary-button"
+                  onClick={() => void copyPrompt(finding)}
+                  type="button"
+                >
+                  <Icon name={copiedTarget === finding.id ? 'check' : 'copy'} />
+                  {copiedTarget === finding.id ? 'Copied' : 'Copy prompt'}
+                </button>
+              </div>
+              <details className="group border-t border-[var(--border)] bg-[var(--soft)]">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-semibold text-[var(--primary)] hover:bg-blue-50 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-blue-600 [&::-webkit-details-marker]:hidden">
+                  <span>
+                    <span className="group-open:hidden">View full AI prompt</span>
+                    <span className="hidden group-open:inline">Hide full AI prompt</span>
+                  </span>
+                  <Icon className="transition-transform group-open:rotate-90" name="chevron" size={16} />
+                </summary>
+                <div className="border-t border-[var(--border)] p-4">
+                  <pre className="max-h-72 overflow-auto whitespace-pre-wrap rounded-lg border border-[var(--border)] bg-white p-4 font-sans text-xs leading-5 text-[var(--muted)]">
+                    {createFixPrompt(finding)}
+                  </pre>
+                </div>
+              </details>
+            </li>
+          )
+        })}
       </ul>
       <span aria-live="polite" className="sr-only">
         {copiedTarget ? `${copiedTarget} prompts copied` : ''}
