@@ -3,31 +3,37 @@ import { MessageComposer } from '../composer/MessageComposer'
 import { AssistantReview } from '../review/AssistantReview'
 import { UserMessage } from './UserMessage'
 
-export interface ConversationEntry {
-  id: string
-  type: 'user' | 'assistant'
-  text?: string
-  attachments?: Attachment[]
-  review?: Review
-}
+export type ConversationEntry =
+  | { id: string; type: 'user'; text: string; attachments: Attachment[] }
+  | { id: string; type: 'assistant'; review: Review }
 
 interface ChatPanelProps {
+  attachments: Attachment[]
   draft: string
   entries: ConversationEntry[]
   isReviewing: boolean
+  error: string | null
+  onAddFiles: (files: File[]) => void
+  onDismissError: () => void
   onDraftChange: (value: string) => void
   onFindingChange: (findingId: string, updates: Partial<Finding>) => void
+  onRemoveAttachment: (attachmentId: string) => void
   onSend: MessageComposerProps['onSend']
 }
 
 type MessageComposerProps = React.ComponentProps<typeof MessageComposer>
 
 export function ChatPanel({
+  attachments,
   draft,
   entries,
   isReviewing,
+  error,
+  onAddFiles,
+  onDismissError,
   onDraftChange,
   onFindingChange,
+  onRemoveAttachment,
   onSend,
 }: ChatPanelProps) {
   return (
@@ -36,29 +42,40 @@ export function ChatPanel({
         {entries.map((entry) =>
           entry.type === 'user' ? (
             <UserMessage
-              attachments={entry.attachments ?? []}
+              attachments={entry.attachments}
               key={entry.id}
-              text={entry.text ?? ''}
+              text={entry.text}
             />
-          ) : entry.review ? (
+          ) : (
             <AssistantReview
               key={entry.id}
               onFindingChange={onFindingChange}
               onQuestionSelect={onDraftChange}
               review={entry.review}
             />
-          ) : null,
+          ),
         )}
         {isReviewing && (
           <div className="flex items-center gap-3 text-sm text-[var(--muted)]" role="status">
             <span className="loading-dot" /> Reviewing your update…
           </div>
         )}
+        {error && (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800" role="alert">
+            <div className="flex items-start justify-between gap-4">
+              <p>{error} Your message and images are still ready to send again.</p>
+              <button className="font-semibold" onClick={onDismissError} type="button">Dismiss</button>
+            </div>
+          </div>
+        )}
       </div>
       <MessageComposer
+        attachments={attachments}
         draft={draft}
         isReviewing={isReviewing}
+        onAddFiles={onAddFiles}
         onDraftChange={onDraftChange}
+        onRemoveAttachment={onRemoveAttachment}
         onSend={onSend}
       />
     </div>

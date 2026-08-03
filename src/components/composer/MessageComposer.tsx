@@ -1,47 +1,61 @@
 import { useRef, useState } from 'react'
-import { filesToAttachments, releaseAttachment } from '../../helpers/files'
+import type { ClipboardEvent } from 'react'
 import type { Attachment, ReviewMode } from '../../types/review'
 import { AttachmentPreview } from '../chat/AttachmentPreview'
 import { Icon } from '../icons/Icon'
 
 interface MessageComposerProps {
+  attachments: Attachment[]
   draft: string
   isReviewing: boolean
+  onAddFiles: (files: File[]) => void
   onDraftChange: (value: string) => void
-  onSend: (message: string, attachments: Attachment[], mode: ReviewMode) => void
+  onRemoveAttachment: (attachmentId: string) => void
+  onSend: (message: string, attachments: Attachment[], mode: ReviewMode) => Promise<void>
 }
 
 export function MessageComposer({
+  attachments,
   draft,
   isReviewing,
+  onAddFiles,
   onDraftChange,
+  onRemoveAttachment,
   onSend,
 }: MessageComposerProps) {
-  const [attachments, setAttachments] = useState<Attachment[]>([])
   const [mode, setMode] = useState<ReviewMode>('full')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const canSend = Boolean(draft.trim() || attachments.length) && !isReviewing
 
   const addFiles = (files: FileList | null) => {
     if (!files) return
-    setAttachments((current) => [
-      ...current,
-      ...filesToAttachments(Array.from(files)),
-    ])
+    onAddFiles(Array.from(files))
   }
 
-  const removeAttachment = (attachmentId: string) => {
-    setAttachments((current) => {
-      const attachment = current.find((item) => item.id === attachmentId)
-      releaseAttachment(attachment)
-      return current.filter((item) => item.id !== attachmentId)
+  const pasteImages = (event: ClipboardEvent<HTMLTextAreaElement>) => {
+    const images = Array.from(event.clipboardData.items)
+      .filter((item) => item.kind === 'file' && item.type.startsWith('image/'))
+      .map((item) => item.getAsFile())
+      .filter((file): file is File => Boolean(file))
+
+    if (images.length === 0) return
+
+    event.preventDefault()
+    const pastedAt = Date.now()
+    const files = images.map((image, index) => {
+      const extension = image.type.split('/')[1] || 'png'
+      return new File(
+        [image],
+        `pasted-image-${pastedAt}-${index + 1}.${extension}`,
+        { type: image.type, lastModified: pastedAt },
+      )
     })
+    onAddFiles(files)
   }
 
-  const submit = () => {
+  const submit = async () => {
     if (!canSend) return
-    onSend(draft.trim(), attachments, mode)
-    setAttachments([])
+    await onSend(draft.trim(), attachments, mode)
   }
 
   return (
@@ -54,7 +68,7 @@ export function MessageComposer({
                 attachment={attachment}
                 compact
                 key={attachment.id}
-                onRemove={() => removeAttachment(attachment.id)}
+                onRemove={() => onRemoveAttachment(attachment.id)}
               />
             ))}
           </div>
@@ -66,15 +80,16 @@ export function MessageComposer({
           onChange={(event) => onDraftChange(event.target.value)}
           onKeyDown={(event) => {
             if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
-              submit()
+              void submit()
             }
           }}
-          placeholder="Ask a follow-up or describe what changed…"
+          onPaste={pasteImages}
+          placeholder="Ask a follow-up, or paste a screenshot with ⌘V…"
           value={draft}
         />
         <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-[var(--border)] pt-3">
           <input
-            accept="image/*"
+            accept="image/jpeg,image/png,image/webp"
             className="sr-only"
             multiple
             onChange={(event) => {
@@ -103,8 +118,8 @@ export function MessageComposer({
             <option value="accessibility">Accessibility only</option>
             <option value="edge-cases">Edge cases only</option>
           </select>
-          <span className="ml-auto hidden text-xs text-[var(--muted)] sm:inline">⌘ Enter to send</span>
-          <button className="primary-button" disabled={!canSend} onClick={submit} type="button">
+          <span className="ml-auto hidden text-xs text-[var(--muted)] sm:inline">⌘V image · ⌘ Enter to send</span>
+          <button className="primary-button" disabled={!canSend} onClick={() => void submit()} type="button">
             {isReviewing ? (
               <><span className="loading-dot" /> Reviewing</>
             ) : (
@@ -112,6 +127,9 @@ export function MessageComposer({
             )}
           </button>
         </div>
+        <p className="mt-2 px-2 text-xs text-[var(--muted)]">
+          Your message and images are sent to Google Gemini for analysis. Do not upload secrets or personal customer data.
+        </p>
       </div>
     </div>
   )

@@ -1,32 +1,50 @@
-# React + TypeScript + Vite
+# ChatBot Design
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A React design-review workspace connected to a real Gemini-powered review agent. The browser sends text and optional JPEG, PNG, or WebP screenshots to the separate TypeScript backend; the Gemini key never enters the frontend bundle.
 
-Currently, two official plugins are available:
+## Free API setup
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+1. Create a Gemini API key in [Google AI Studio](https://aistudio.google.com/app/apikey).
+2. Install both projects:
 
-## React Compiler
+   ```bash
+   npm install
+   npm --prefix backend install
+   ```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+3. Create the private backend configuration:
 
-## Expanding the Oxlint configuration
+   ```bash
+   cp backend/.env.example backend/.env
+   ```
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+4. Replace `replace_with_your_key` in `backend/.env`. Never commit or share this file.
+5. Start the frontend and backend together:
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+   ```bash
+   npm run dev:all
+   ```
+
+Open `http://localhost:5173`. The backend listens only on `127.0.0.1:3001` and Vite proxies `/api` requests to it.
+
+## Commands
+
+```bash
+npm run dev:all
+npm run lint
+npm run build
+npm --prefix backend run typecheck
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+## API
+
+- `GET /api/health` returns backend availability without exposing or testing the key.
+- `POST /api/reviews` accepts multipart fields `message`, `mode`, optional `previousReview`, and up to five repeated `images` files.
+
+The backend uses `gemini-3.6-flash` by default. Change `GEMINI_MODEL` only in the backend environment.
+
+## Privacy and deployment
+
+Messages and images are sent to Google Gemini. Do not upload passwords, API keys, personal customer data, or confidential production screenshots. Review Google’s current Gemini API data-use terms before using the free tier for sensitive work.
+
+This version is deliberately local and stateless: chat data lives in browser memory and disappears on refresh. Before exposing the backend publicly, add authentication, per-user quotas, persistent storage with ownership checks, production HTTPS, and a provider budget alert. CORS and IP rate limiting alone are not user authentication.

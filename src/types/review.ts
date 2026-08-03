@@ -17,8 +17,10 @@ export interface Chat {
 export interface Attachment {
   id: string
   name: string
-  previewUrl?: string
-  tone?: 'blue' | 'sand' | 'mint'
+  type: string
+  size: number
+  file: File
+  previewUrl: string
 }
 
 export interface Finding {

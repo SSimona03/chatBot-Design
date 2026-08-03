@@ -13,5 +13,5 @@ export function getFilteredChats(chats: Chat[], query: string) {
 }
 
 export function getChatById(chats: Chat[], chatId: string) {
-  return chats.find((chat) => chat.id === chatId) ?? chats[0]
+  return chats.find((chat) => chat.id === chatId)
 }

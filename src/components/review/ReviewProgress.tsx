@@ -1,8 +1,19 @@
 import { getReviewCounts } from '../../getters/reviewGetters'
-import type { Finding } from '../../types/review'
-import { Icon } from '../icons/Icon'
+import type { Review } from '../../types/review'
 
-export function ReviewProgress({ findings }: { findings: Finding[] }) {
+export function ReviewProgress({ review }: { review: Review | null }) {
+  if (!review) {
+    return (
+      <aside className="progress-panel" aria-labelledby="progress-heading">
+        <h2 className="text-sm font-semibold text-[var(--ink)]" id="progress-heading">Review progress</h2>
+        <p className="mt-4 text-sm leading-6 text-[var(--muted)]">
+          Findings and progress will appear after your first AI review.
+        </p>
+      </aside>
+    )
+  }
+
+  const findings = review.findings
   const counts = getReviewCounts(findings)
   const items = [
     ['High severity', counts.high],
@@ -27,9 +38,6 @@ export function ReviewProgress({ findings }: { findings: Finding[] }) {
           </div>
         ))}
       </dl>
-      <button className="secondary-button mt-6 w-full justify-center">
-        <Icon name="upload" /> Upload revision
-      </button>
     </aside>
   )
 }
