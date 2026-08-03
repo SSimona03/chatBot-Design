@@ -13,7 +13,13 @@ export const app = express()
 
 app.disable('x-powered-by')
 if (config.NODE_ENV === 'production') app.set('trust proxy', 1)
-app.use(helmet())
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      imgSrc: ["'self'", 'data:', 'blob:'],
+    },
+  },
+}))
 if (config.CLIENT_ORIGIN) {
   app.use(cors({
     origin: config.CLIENT_ORIGIN,
