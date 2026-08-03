@@ -9,6 +9,7 @@
     "dev:all": "concurrently -n frontend,backend -c blue,green \"npm run dev\" \"npm run dev:backend\"",
     "build": "tsc -b && vite build && npm --prefix backend run build",
     "lint": "oxlint",
+    "test": "npm --prefix backend test",
     "preview": "vite preview"
   },
   "dependencies": {

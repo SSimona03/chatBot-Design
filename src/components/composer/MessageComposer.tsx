@@ -79,7 +79,12 @@ export function MessageComposer({
           id="review-message"
           onChange={(event) => onDraftChange(event.target.value)}
           onKeyDown={(event) => {
-            if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
+            if (
+              event.key === 'Enter'
+              && !event.shiftKey
+              && !event.nativeEvent.isComposing
+            ) {
+              event.preventDefault()
               void submit()
             }
           }}
@@ -118,7 +123,7 @@ export function MessageComposer({
             <option value="accessibility">Accessibility only</option>
             <option value="edge-cases">Edge cases only</option>
           </select>
-          <span className="ml-auto hidden text-xs text-[var(--muted)] sm:inline">⌘V image · ⌘ Enter to send</span>
+          <span className="ml-auto hidden text-xs text-[var(--muted)] sm:inline">⌘V image · Enter to send · Shift+Enter for new line</span>
           <button className="primary-button" disabled={!canSend} onClick={() => void submit()} type="button">
             {isReviewing ? (
               <><span className="loading-dot" /> Reviewing</>

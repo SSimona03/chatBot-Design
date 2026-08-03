@@ -1,12 +1,23 @@
-import type { Attachment, Review, ReviewMode } from '../types/review'
+import type { Attachment, ReportAnswer, Review, ReviewMode } from '../types/review'
+
+interface ResponseMeta {
+  requestId: string
+  model: string
+}
 
 interface ReviewResponse {
+  kind: 'review'
   review: Review
-  meta: {
-    requestId: string
-    model: string
-  }
+  meta: ResponseMeta
 }
+
+interface AnswerResponse {
+  kind: 'answer'
+  answer: ReportAnswer
+  meta: ResponseMeta
+}
+
+export type ReviewApiResponse = ReviewResponse | AnswerResponse
 
 interface SubmitReviewInput {
   message: string
@@ -42,7 +53,23 @@ function isReview(value: unknown): value is Review {
     ))
 }
 
-export async function submitReview(input: SubmitReviewInput): Promise<ReviewResponse> {
+function isReportAnswer(value: unknown): value is ReportAnswer {
+  if (!value || typeof value !== 'object') return false
+  const answer = value as Partial<ReportAnswer>
+  return typeof answer.summary === 'string'
+    && Array.isArray(answer.actions)
+    && answer.actions.every((action) => (
+      action
+      && typeof action.title === 'string'
+      && typeof action.details === 'string'
+      && Array.isArray(action.findingIds)
+      && action.findingIds.every((id) => typeof id === 'string')
+    ))
+    && Array.isArray(answer.evidenceNeeded)
+    && answer.evidenceNeeded.every((item) => typeof item === 'string')
+}
+
+export async function submitReview(input: SubmitReviewInput): Promise<ReviewApiResponse> {
   const form = new FormData()
   form.append('message', input.message)
   form.append('mode', input.mode)
@@ -65,10 +92,18 @@ export async function submitReview(input: SubmitReviewInput): Promise<ReviewResp
     throw new Error(message || 'The review could not be completed. Please try again.')
   }
 
-  const result = data as Partial<ReviewResponse> | null
-  if (!result || !isReview(result.review) || !result.meta || typeof result.meta.requestId !== 'string') {
+  const result = data as {
+    kind?: unknown
+    review?: unknown
+    answer?: unknown
+    meta?: { requestId?: unknown }
+  } | null
+  const validMeta = result?.meta && typeof result.meta.requestId === 'string'
+  const validReview = result?.kind === 'review' && isReview(result.review)
+  const validAnswer = result?.kind === 'answer' && isReportAnswer(result.answer)
+  if (!result || !validMeta || (!validReview && !validAnswer)) {
     throw new Error('The server returned an invalid review. Please try again.')
   }
 
-  return result as ReviewResponse
+  return result as ReviewApiResponse
 }

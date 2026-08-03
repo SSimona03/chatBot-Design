@@ -1,5 +1,8 @@
 import { Router } from 'express'
 import { runDesignReviewAgent } from '../agent/designReviewAgent.js'
+import { runReportChatAgent } from '../agent/reportChatAgent.js'
+import { runScopeGateAgent } from '../agent/scopeGateAgent.js'
+import { assertNoRuleOverride } from '../guardrails.js'
 import { HttpError } from '../httpError.js'
 import { receiveImages, validateImages } from '../middleware/upload.js'
 import {
@@ -47,7 +50,53 @@ reviewsRouter.post('/', receiveImages, async (request, response, next) => {
       previousReview = previousReviewResult.data
     }
 
+    assertNoRuleOverride(message)
+    const scopeDecision = await runScopeGateAgent({
+      message,
+      images,
+      previousReview,
+    })
+    if (scopeDecision.decision === 'block') {
+      const overrideBlocked = scopeDecision.reason === 'rule_override'
+      const unsafeContent = scopeDecision.reason === 'unsafe_content'
+      throw new HttpError(
+        422,
+        overrideBlocked
+          ? 'PROMPT_OVERRIDE_BLOCKED'
+          : unsafeContent ? 'UNSAFE_CONTENT' : 'OUT_OF_SCOPE',
+        overrideBlocked
+          ? 'Requests to change or reveal the assistant rules are not allowed.'
+          : unsafeContent
+            ? 'This image or message cannot be processed safely.'
+            : 'This assistant only reviews product and interface design.',
+      )
+    }
+
     const startedAt = Date.now()
+    if (scopeDecision.requestType === 'follow_up') {
+      if (!previousReview || images.length > 0) {
+        throw new HttpError(422, 'OUT_OF_SCOPE', 'A report follow-up requires an existing report and no new image.')
+      }
+      const answer = await runReportChatAgent(message, previousReview)
+      console.info(JSON.stringify({
+        requestId: request.requestId,
+        route: 'POST /api/reviews',
+        status: 200,
+        durationMs: Date.now() - startedAt,
+        responseKind: 'answer',
+        scopeReason: scopeDecision.reason,
+      }))
+      response.set('Cache-Control', 'no-store').json({
+        kind: 'answer',
+        answer,
+        meta: {
+          requestId: request.requestId,
+          model: process.env.GEMINI_MODEL || 'gemini-3.1-flash-lite',
+        },
+      })
+      return
+    }
+
     const review = await runDesignReviewAgent({
       message,
       mode: modeResult.data,
@@ -62,13 +111,15 @@ reviewsRouter.post('/', receiveImages, async (request, response, next) => {
       durationMs: Date.now() - startedAt,
       modelImageCount: images.length,
       totalImageBytes: images.reduce((sum, image) => sum + image.size, 0),
+      scopeReason: scopeDecision.reason,
     }))
 
     response.set('Cache-Control', 'no-store').json({
+      kind: 'review',
       review,
       meta: {
         requestId: request.requestId,
-        model: process.env.GEMINI_MODEL || 'gemini-3.6-flash',
+        model: process.env.GEMINI_MODEL || 'gemini-3.1-flash-lite',
       },
     })
   } catch (error) {

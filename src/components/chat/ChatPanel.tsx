@@ -1,11 +1,13 @@
-import type { Attachment, Finding, Review } from '../../types/review'
+import type { Attachment, Finding, ReportAnswer, Review } from '../../types/review'
 import { MessageComposer } from '../composer/MessageComposer'
 import { AssistantReview } from '../review/AssistantReview'
 import { UserMessage } from './UserMessage'
+import { AssistantMessage } from './AssistantMessage'
 
 export type ConversationEntry =
   | { id: string; type: 'user'; text: string; attachments: Attachment[] }
-  | { id: string; type: 'assistant'; review: Review }
+  | { id: string; type: 'assistant-review'; review: Review }
+  | { id: string; type: 'assistant-message'; answer: ReportAnswer }
 
 interface ChatPanelProps {
   attachments: Attachment[]
@@ -46,18 +48,20 @@ export function ChatPanel({
               key={entry.id}
               text={entry.text}
             />
-          ) : (
+          ) : entry.type === 'assistant-review' ? (
             <AssistantReview
               key={entry.id}
               onFindingChange={onFindingChange}
               onQuestionSelect={onDraftChange}
               review={entry.review}
             />
+          ) : (
+            <AssistantMessage answer={entry.answer} key={entry.id} />
           ),
         )}
         {isReviewing && (
           <div className="flex items-center gap-3 text-sm text-[var(--muted)]" role="status">
-            <span className="loading-dot" /> Reviewing your update…
+            <span className="loading-dot" /> Checking your request…
           </div>
         )}
         {error && (

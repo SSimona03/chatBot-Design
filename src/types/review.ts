@@ -43,5 +43,15 @@ export interface Review {
   findings: Finding[]
 }
 
+export interface ReportAnswer {
+  summary: string
+  actions: Array<{
+    title: string
+    details: string
+    findingIds: string[]
+  }>
+  evidenceNeeded: string[]
+}
+
 export type FindingFilter = 'all' | FindingCategory
 export type ReviewMode = 'full' | 'accessibility' | 'edge-cases'

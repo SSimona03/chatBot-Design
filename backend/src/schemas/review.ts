@@ -41,6 +41,7 @@ export const reviewSchema = modelReviewSchema.extend({
 })
 
 export const previousReviewSchema = reviewSchema.pick({
+  id: true,
   summary: true,
   accessibilityScore: true,
   edgeCaseScore: true,

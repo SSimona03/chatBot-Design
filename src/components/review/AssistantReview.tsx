@@ -37,7 +37,11 @@ export function AssistantReview({
           <ScoreCard label="Accessibility" score={review.accessibilityScore} />
           <ScoreCard label="Edge cases" score={review.edgeCaseScore} />
         </div>
-        <FindingsTable findings={review.findings} onFindingChange={onFindingChange} />
+        <FindingsTable
+          findings={review.findings}
+          onFindingChange={onFindingChange}
+          reviewId={review.id}
+        />
         <div className="mt-6 border-t border-[var(--border)] pt-5">
           <p className="text-sm font-semibold text-[var(--ink)]">Suggested follow-up</p>
           <div className="mt-3 flex flex-wrap gap-2">

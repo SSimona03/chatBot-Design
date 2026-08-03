@@ -146,7 +146,7 @@ function App() {
           ? updateReview(conversation.latestReview)
           : null,
         entries: conversation.entries.map((entry) => (
-          entry.type === 'assistant'
+          entry.type === 'assistant-review'
             ? { ...entry, review: updateReview(entry.review) }
             : entry
         )),
@@ -200,7 +200,7 @@ function App() {
     }))
 
     try {
-      const { review } = await submitReview({
+      const result = await submitReview({
         message,
         mode,
         attachments,
@@ -225,9 +225,11 @@ function App() {
             text: message || 'Please review the attached design.',
             attachments,
           },
-          { id: createId('response'), type: 'assistant', review },
+          result.kind === 'review'
+            ? { id: createId('response'), type: 'assistant-review', review: result.review }
+            : { id: createId('answer'), type: 'assistant-message', answer: result.answer },
         ],
-        latestReview: review,
+        latestReview: result.kind === 'review' ? result.review : conversation.latestReview,
         draft: '',
         draftAttachments: [],
         status: 'idle',

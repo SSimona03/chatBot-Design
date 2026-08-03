@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: chatbot-design
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm --prefix backend ci && npm run build
+    startCommand: npm --prefix backend start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-3.1-flash-lite
+      - key: REQUEST_TIMEOUT_MS
+        value: 60000
+      - key: RATE_LIMIT_MAX
+        value: 10

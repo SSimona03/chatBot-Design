@@ -1,8 +1,8 @@
 import { app } from './app.js'
 import { config } from './config.js'
 
-const server = app.listen(config.PORT, '127.0.0.1', () => {
-  console.info(`ChatBot Design backend listening on http://127.0.0.1:${config.PORT}`)
+const server = app.listen(config.PORT, config.HOST, () => {
+  console.info(`ChatBot Design backend listening on ${config.HOST}:${config.PORT}`)
 })
 
 function shutdown(signal: string) {
