@@ -3,7 +3,7 @@ services:
     name: chatbot-design
     runtime: node
     plan: free
-    buildCommand: npm ci && npm --prefix backend ci && npm run build
+    buildCommand: npm ci --include=dev && npm --prefix backend ci --include=dev && npm run build
     startCommand: npm --prefix backend start
     healthCheckPath: /api/health
     envVars:
